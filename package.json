@@ -18,6 +18,7 @@
   "homepage": "https://github.com/AmazingXia/magic-cube#readme",
   "dependencies": {
     "axios": "^1.8.4",
+    "cubejs": "github:ldez/cubejs",
     "form-data": "^4.0.2"
   }
 }
