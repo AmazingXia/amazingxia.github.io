@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>魔方</title>
-  <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/cube.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/cubejs@1.3.2/lib/solve.min.js"></script>
+  <script src="./lib/cube.min.js"></script>
+  <script src="./lib/solve.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -276,7 +276,7 @@
     }
 
     .el-message {
-      min-width: 70%;
+      width: max-content;
       box-sizing: border-box;
       border: 1px solid #ebeef5;
       position: fixed;
@@ -287,7 +287,7 @@
       transition: opacity .3s, -webkit-transform .4s;
       transition: opacity .3s, transform .4s;
       transition: opacity .3s, transform .4s, -webkit-transform .4s;
-      padding: 5px 15px 5px 15px;
+      padding: 5px 15px;
       display: flex;
       align-items: center;
       border-radius: 4px;
@@ -1583,7 +1583,23 @@
         this.colorMap = {}
 
         this.timer = null
-        this.solverWorker = null
+      }
+
+      // 消息显示工具函数
+      showMessage(text, duration = 2000) {
+        const message = document.querySelector('.el-message')
+        const messageContent = message.querySelector('.el-message__content')
+        messageContent.textContent = text
+        message.style.opacity = '1'
+        message.style.transform = 'translateX(-50%) translateY(0px)'
+
+        if (duration > 0) {
+          setTimeout(() => {
+            const message = document.querySelector('.el-message')
+            message.style.opacity = '0'
+            message.style.transform = 'translateX(-50%) translateY(-40px)'
+          }, duration)
+        }
       }
 
       init() {
@@ -1612,24 +1628,6 @@
 
         this.setCubeColorByColorSet(0)
         this.setCubeColorByColorSet(1)
-
-        // Create and initialize the solver worker
-        this.solverWorker = new Worker('solver.js');
-
-        this.solverWorker.onmessage = (event) => {
-          this.handleSolution(event.data);
-        };
-
-        this.solverWorker.onerror = (error) => {
-          console.error('还原过程出错:', error)
-          const message = document.querySelector('.el-message')
-          const messageContent = message.querySelector('.el-message__content')
-          messageContent.textContent = `还原出错: ${error.message}`
-          setTimeout(() => {
-            message.style.opacity = '0'
-            message.style.transform = 'translateX(-50%) translateY(-40px)'
-          }, 3000)
-        }
       }
 
       addBtnEvent() {
@@ -1687,7 +1685,7 @@
 
               const level = secondList[j]
 
-              level.style.transform = `translateZ(${(1 - j)*80}px) rotateZ(0)`
+              level.style.transform = `translateZ(${(1 - j) * 80}px) rotateZ(0)`
 
               for (let k = 0, klen = secondList[j]['children'].length; k < klen; k++) { // 9个block
 
@@ -1902,17 +1900,8 @@
               item.style.overflow = ['visible', 'hidden', 'hidden'][index]
             })
 
-            if (time && this.validateSuccees()) {
-
-              const message = document.querySelector('.el-message')
-              message.style.opacity = '1'
-              message.style.transform = 'translateX(-50%) translateY(0px)'
-
-              let timer = setTimeout(() => {
-                message.style.opacity = '0'
-                message.style.transform = 'translateX(-50%) translateY(-40px)'
-                clearTimeout(timer)
-              }, 2000)
+            if (this.validateSuccees()) {
+              this.showMessage('恭喜！魔方还原完成！')
             }
 
 
@@ -1963,7 +1952,7 @@
 
             // console.log('方向===>', directionX);
             if ((90 > directionX && directionX > -90) || (-270 < directionX && directionX < -180) || (270 <
-                directionX && directionX < 360)) {
+              directionX && directionX < 360)) {
               userRotateX = (-freshPageX + originX) / 500 * 360
             } else {
               userRotateX = (freshPageX - originX) / 500 * 360
@@ -2008,7 +1997,7 @@
 
             // console.log('方向===>', directionX);
             if ((90 > directionX && directionX > -90) || (-270 < directionX && directionX < -180) || (270 <
-                directionX && directionX < 360)) {
+              directionX && directionX < 360)) {
               userRotateX = (-freshPageX + originX) / 500 * 360
             } else {
               userRotateX = (freshPageX - originX) / 500 * 360
@@ -2102,7 +2091,7 @@
             .colorPosition[3], this.colorPosition[4]
           ]
         }
-        girdDom.innerText = `${this.colorPosition[0]},${this.colorPosition[1]},${this.colorPosition[2]}`
+        // girdDom.innerText = `${this.colorPosition[0]},${this.colorPosition[1]},${this.colorPosition[2]}`
 
         // this.colorPosition[4] = girdDom.innerText
         // console.log('this.colorPosition===>', this.colorPosition);
@@ -2139,7 +2128,7 @@
           }
 
           this.colorMap[X][Y][Z] = currColorClass
-        } catch (err) {}
+        } catch (err) { }
       }
 
       // 记录第 i 个立方体的颜色
@@ -2222,8 +2211,8 @@
       }
 
 
-      test() {
-        this.rotateDirection = this.random()
+      test(r) {
+        this.rotateDirection = r
         this.surfaceRotation(400)
       }
 
@@ -2235,14 +2224,12 @@
 
         this.timer = setInterval(() => {
           this.rotateDirection = this.random()
-          this.surfaceRotation(200)
+          this.surfaceRotation(250)
           i++
-          if (i === 10) {
+          if (i === 20) {
             clearInterval(this.timer)
-            // 打乱完成后，等待一段时间再自动还原
-            setTimeout(() => this.solve(), 500)
           }
-        }, 100);
+        }, 268);
       }
 
       validateSuccees() {
@@ -2291,60 +2278,38 @@
       }
 
       // 自动还原方法
-      solve() {
+      async solve() {
         if (this.timer) {
           clearInterval(this.timer)
         }
 
-        // Add a loading message
-        const message = document.querySelector('.el-message')
-        const messageContent = message.querySelector('.el-message__content')
-        messageContent.textContent = '正在计算还原步骤...'
-        message.style.opacity = '1'
-        message.style.transform = 'translateX(-50%) translateY(0px)'
-
         // 将当前魔方状态转换为Cube.js可识别的格式
         const cubeState = this.convertToFaceletString()
-        console.log('当前魔方状态:', cubeState)
+        // console.log('当前魔方状态:', cubeState)
 
-        // Send the cube state to the persistent worker
-        this.solverWorker.postMessage(cubeState);
+        const solution = await this.getSolution(cubeState)
+
+        this.handleSolution(solution)
       }
 
       handleSolution(solution) {
-        const message = document.querySelector('.el-message')
-        const messageContent = message.querySelector('.el-message__content')
-
-        console.log('还原步骤:', solution)
-
         if (!solution && solution !== "") {
-          messageContent.textContent = '无法找到还原方案！'
-          setTimeout(() => {
-            message.style.opacity = '0'
-            message.style.transform = 'translateX(-50%) translateY(-40px)'
-          }, 2000)
           console.log('无法找到还原方案！')
           return
         }
 
-        // Hide the loading message
-        message.style.opacity = '0'
-        message.style.transform = 'translateX(-50%) translateY(-40px)'
-
         // 将Cube.js的解法转换为我们的旋转指令
         const moves = this.convertSolutionToMoves(solution)
-        console.log('转换后的还原步骤:', moves)
 
         // 执行还原步骤
         let stepIndex = 0
         this.timer = setInterval(() => {
           if (stepIndex < moves.length) {
-            this.rotateDirection = moves[stepIndex]
+            this.rotateDirection = [...moves[stepIndex]]
             this.surfaceRotation(300)
             stepIndex++
           } else {
             clearInterval(this.timer)
-            console.log('执行完所有步骤')
             // 检查是否已经还原完成
             if (this.validateSuccees()) {
               console.log('还原完成！')
@@ -2363,16 +2328,12 @@
 
         // 获取所有面的颜色数据
         const faceColors = {};
-        console.log('开始获取魔方状态...');
-
         // 第一步：收集所有面的颜色信息
         FACES.forEach(face => {
           const colors = this.getFaceColors(face);
-          if (colors.length !== 9) {
-            throw new Error(`${face}面颜色数量错误：${colors.length}`);
-          }
           faceColors[face] = colors;
         });
+
 
         // 第二步：获取每个面的中心块颜色（这决定了面的颜色）
         const centerColors = {};
@@ -2380,66 +2341,80 @@
           centerColors[face] = faceColors[face][4]; // 中心块在索引4
         });
 
+        // console.log('faceColors,===>', faceColors);
+        // console.log('centerColors===>', centerColors);
+
         // 第三步：建立颜色到面符号的映射
         const colorToSymbol = {};
         FACES.forEach((face, index) => {
           const centerColor = centerColors[face];
-
-          console.log(`centerColor`, centerColor, faceColors[face]);
           colorToSymbol[centerColor] = FACE_SYMBOLS[index];
         });
 
-        // 第四步：按顺序构建状态字符串
-        let state = '';
-        const faceOrder = ['U', 'R', 'F', 'D', 'L', 'B'];
-        const faceNameMapping = {
-            'U': 'top',
-            'R': 'right',
-            'F': 'front',
-            'D': 'down',
-            'L': 'left',
-            'B': 'back'
-        };
+        // console.log('colorToSymbol===>', colorToSymbol);
 
-        faceOrder.forEach(faceSymbol => {
-            const faceName = faceNameMapping[faceSymbol];
-            const colors = faceColors[faceName];
-            const faceString = colors.map(color => colorToSymbol[color] || '?').join('');
-            state += faceString;
+        // 按照标准魔方展开图顺序：
+        // UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB
+        // 依次拼接各面9个色块
+        const faceOrder = [
+          { symbol: 'U', face: 'top' },
+          { symbol: 'R', face: 'right' },
+          { symbol: 'F', face: 'front' },
+          { symbol: 'D', face: 'down' },
+          { symbol: 'L', face: 'left' },
+          { symbol: 'B', face: 'back' },
+        ];
+        let state = '';
+        faceOrder.forEach(({ face }) => {
+          const colors = faceColors[face];
+          const faceString = colors.map(color => colorToSymbol[color] || '?').join('');
+          state += faceString;
         });
 
-
-        // 第五步：验证状态
-        console.log('\n最终状态字符串：', state);
-        console.log('状态字符串长度：', state.length);
-
-        if(state.includes('?')) {
-          console.error('状态字符串中存在未映射的颜色!');
+        // 验证状态
+        if (state.length !== 54) {
+          throw new Error(`状态字符串长度错误: ${state.length}`);
+        }
+        if (state.includes('?')) {
+          throw new Error('状态字符串中存在未映射的颜色!');
         }
 
         return state;
+      }
+
+      async getSolution(cubeState) {
+        const cube = Cube.fromString(cubeState);
+        const asString = cube.asString()
+        const solution = await cube.solve();
+        return solution
       }
 
       // 将Cube.js的解法转换为我们的旋转指令
       convertSolutionToMoves(solution) {
         const moves = []
         const moveMap = {
-          // 基本动作
-          'U': [1, 2, 1],    // 上层顺时针
-          'U\'': [1, 2, -1], // 上层逆时针
-          'U2': [1, 2, 2],   // 上层180度
-          'D': [1, 0, -1],   // 下层顺时针
-          'D\'': [1, 0, 1],  // 下层逆时针
-          'D2': [1, 0, 2],   // 下层180度
-          'L': [0, 0, 1],    // 左层顺时针
-          'L\'': [0, 0, -1], // 左层逆时针
-          'L2': [0, 0, 2],   // 左层180度
-          'R': [0, 2, -1],   // 右层顺时针
-          'R\'': [0, 2, 1],  // 右层逆时针
-          'R2': [0, 2, 2],   // 右层180度
+          'U': [0, 2, -1],    // 上层顺时针
+          'U\'': [0, 2, 1], // 上层逆时针
+          'U2': [0, 2, 2],   // 上层180度
+
+          'D': [0, 0, 1],   // 下层顺时针
+          'D\'': [0, 0, -1],  // 下层逆时针
+          'D2': [0, 0, 2],   // 下层180度
+
+          'L': [1, 2, -1],    // 左层顺时针
+          'L\'': [1, 2, 1], // 左层逆时针
+          'L2': [1, 2, 2],   // 左层180度
+
+
+          'R': [1, 0, 1],   // 右层顺时针
+          'R\'': [1, 0, -1],  // 右层逆时针
+          'R2': [1, 0, 2],   // 右层180度
+
+
           'F': [2, 0, 1],    // 前层顺时针
           'F\'': [2, 0, -1], // 前层逆时针
           'F2': [2, 0, 2],   // 前层180度
+          // 基本动作
           'B': [2, 2, -1],   // 后层顺时针
           'B\'': [2, 2, 1],  // 后层逆时针
           'B2': [2, 2, 2],   // 后层180度
@@ -2447,72 +2422,124 @@
 
         // 解析解法字符串
         const moveList = solution.split(' ').filter(move => move.length > 0)
-        console.log('解析的移动序列:', moveList)
-
         for (const move of moveList) {
           if (moveMap[move]) {
             moves.push(moveMap[move])
           } else {
             console.warn('未知的移动:', move)
+            // 对于未知的移动，跳过
           }
         }
 
-        return moves
+        return JSON.parse(JSON.stringify(moves))
       }
 
       // 获取某个面的颜色数组
       getFaceColors(face) {
         const colors = [];
-
+        const temp =
+          `
+                    +------------+
+                    | U1  U2  U3 |
+                    |            |
+                    | U4  U5  U6 |
+                    |            |
+                    | U7  U8  U9 |
+        +------------+------------+------------+------------+
+        | L1  L2  L3 | F1  F2  F3 | R1  R2  R3 | B1  B2  B3 |
+        |            |            |            |            |
+        | L4  L5  L6 | F4  F5  F6 | R4  R5  R6 | B4  B5  B6 |
+        |            |            |            |            |
+        | L7  L8  L9 | F7  F8  F9 | R7  R8  R9 | B7  B8  B9 |
+        +------------+------------+------------+------------+
+                    | D1  D2  D3 |
+                    |            |
+                    | D4  D5  D6 |
+                    |            |
+                    | D7  D8  D9 |
+                    +------------+
+        `
         try {
           switch (face) {
+            // left (x = 6)
             case 'left':
-              // 左面 (x = 0)
-              // 按照从上到下，从左到右的顺序
-              const leftOrder = [
-                ['1', '1'], ['1', '3'], ['1', '5'],
-                ['3', '1'], ['3', '3'], ['3', '5'],
-                ['5', '1'], ['5', '3'], ['5', '5']
-              ];
-              leftOrder.forEach(([y, z]) => {
-                colors.push(this.colorMap['0'][y][z]);
-              });
-              break;
-
-            case 'right':
-              // 右面 (x = 6)
               const rightOrder = [
-                ['1', '1'], ['1', '3'], ['1', '5'],
-                ['3', '1'], ['3', '3'], ['3', '5'],
-                ['5', '1'], ['5', '3'], ['5', '5']
+                ['1', '1'], ['3', '1'], ['5', '1'],
+                ['1', '3'], ['3', '3'], ['5', '3'],
+                ['1', '5'], ['3', '5'], ['5', '5'],
               ];
               rightOrder.forEach(([y, z]) => {
                 colors.push(this.colorMap['6'][y][z]);
               });
               break;
 
-            case 'top':
-              // 上面 (y = 0)
-              const topOrder = [
-                ['1', '1'], ['3', '1'], ['5', '1'],
-                ['1', '3'], ['3', '3'], ['5', '3'],
-                ['1', '5'], ['3', '5'], ['5', '5']
+            // right (x = 0)
+            case 'right':
+              // 按照从上到下，从左到右的顺序
+              const leftOrder = [
+                ['5', '1'], ['3', '1'], ['1', '1'],
+                ['5', '3'], ['3', '3'], ['1', '3'],
+                ['5', '5'], ['3', '5'], ['1', '5'],
               ];
-              topOrder.forEach(([x, z]) => {
-                if (this.colorMap[x] && this.colorMap[x]['0'] && this.colorMap[x]['0'][z]) {
-                  colors.push(this.colorMap[x]['0'][z]);
+              leftOrder.forEach(([y, z]) => {
+                colors.push(this.colorMap['0'][y][z]);
+              });
+              break;
+
+            // up (z = 0)
+            case 'top':
+              const frontOrder = [
+                ['5', '1'],
+                ['3', '1'],
+                ['1', '1'],
+
+                ['5', '3'],
+                ['3', '3'],
+                ['1', '3'],
+
+                ['5', '5'],
+                ['3', '5'],
+                ['1', '5'],
+              ];
+              frontOrder.forEach(([x, y]) => {
+                if (this.colorMap[x] && this.colorMap[x][y]) {
+                  colors.push(this.colorMap[x][y]['0']);
                 } else {
-                  console.error(`获取上方颜色失败: x=${x}, y=0, z=${z}`);
+                  console.error(`Missing color data for front face at x=${x}, y=${y}`);
                 }
               });
               break;
 
+            // down (z = 6)
             case 'down':
-              // 下面 (y = 6)
+              const backOrder = [
+                ['5', '5'],
+                ['3', '5'],
+                ['1', '5'],
+
+                ['5', '3'],
+                ['3', '3'],
+                ['1', '3'],
+
+                ['5', '1'],
+                ['3', '1'],
+                ['1', '1'],
+              ];
+              backOrder.forEach(([x, y]) => {
+                if (this.colorMap[x] && this.colorMap[x][y]) {
+                  colors.push(this.colorMap[x][y]['6']);
+                } else {
+                  console.error(`Missing color data for back face at x=${x}, y=${y}`);
+                }
+              });
+              break;
+
+            // front (y = 6)
+            case 'front':
               const bottomOrder = [
-                ['1', '1'], ['3', '1'], ['5', '1'],
-                ['1', '3'], ['3', '3'], ['5', '3'],
-                ['1', '5'], ['3', '5'], ['5', '5']
+                ['5', '1'], ['3', '1'], ['1', '1'],
+                ['5', '3'], ['3', '3'], ['1', '3'],
+                ['5', '5'], ['3', '5'], ['1', '5'],
               ];
               bottomOrder.forEach(([x, z]) => {
                 // 检查数据路径是否存在
@@ -2524,707 +2551,44 @@
               });
               break;
 
-            case 'front':
-              // 前面 (z = 0)
-              const frontOrder = [
-                ['1', '1'], ['3', '1'], ['5', '1'],
-                ['1', '3'], ['3', '3'], ['5', '3'],
-                ['1', '5'], ['3', '5'], ['5', '5']
-              ];
-              frontOrder.forEach(([x, y]) => {
-                if (this.colorMap[x] && this.colorMap[x][y]) {
-                  colors.push(this.colorMap[x][y]['0']);
-                } else {
-                  console.error(`Missing color data for front face at x=${x}, y=${y}`);
-                }
-              });
-              break;
 
             case 'back':
-              // 后面 (z = 6)
-              const backOrder = [
-                ['1', '1'], ['3', '1'], ['5', '1'],
-                ['1', '3'], ['3', '3'], ['5', '3'],
-                ['1', '5'], ['3', '5'], ['5', '5']
+              // 上面 (y = 0)
+              const topOrder = [
+                ['1', '1'],
+                ['3', '1'],
+                ['5', '1'],
+
+                ['1', '3'],
+                ['3', '3'],
+                ['5', '3'],
+
+                ['1', '5'],
+                ['3', '5'],
+                ['5', '5'],
               ];
-              backOrder.forEach(([x, y]) => {
-                if (this.colorMap[x] && this.colorMap[x][y]) {
-                  colors.push(this.colorMap[x][y]['6']);
+              topOrder.forEach(([x, z]) => {
+                if (this.colorMap[x] && this.colorMap[x]['0'] && this.colorMap[x]['0'][z]) {
+                  colors.push(this.colorMap[x]['0'][z]);
                 } else {
-                  console.error(`Missing color data for back face at x=${x}, y=${y}`);
+                  console.error(`获取上方颜色失败: x=${x}, y=0, z=${z}`);
                 }
               });
               break;
           }
-
-          // 过滤掉undefined和null值
-          const validColors = colors.filter(color => color != null);
-
-          if (validColors.length !== 9) {
-            console.error(`Invalid number of colors for ${face} face:`, validColors);
-            console.error('Original colorMap structure:', JSON.stringify(this.colorMap, null, 2));
-            throw new Error(`Invalid number of colors for ${face} face: got ${validColors.length}, expected 9`);
-          }
-
-          // 标准化颜色名称
-          const normalizedColors = validColors.map(color => {
-            // 移除可能的 '-grid' 后缀
-            return color.replace('-grid', '');
-          });
-          return normalizedColors;
+          return colors;
         } catch (error) {
           console.error(`Error getting colors for ${face} face:`, error);
-          // 打印完整的 colorMap 结构以便调试
           console.error('Full colorMap structure:', JSON.stringify(this.colorMap, null, 2));
           throw error;
         }
-      }
-
-      // 分析当前魔方状态
-      analyzeCurrentState() {
-        const state = {
-          whiteCross: this.checkWhiteCross(),
-          whiteCorners: this.checkWhiteCorners(),
-          middleLayer: this.checkMiddleLayer(),
-          topCross: this.checkTopCross(),
-          topCorners: this.checkTopCorners(),
-          isSolved: this.validateSuccees()
-        }
-
-        return state
-      }
-
-      // 检查白色十字状态
-      checkWhiteCross() {
-        const whiteEdges = this.getWhiteEdges()
-        return whiteEdges.length
-      }
-
-      // 检查白色角块状态
-      checkWhiteCorners() {
-        const whiteCorners = this.getWhiteCorners()
-        return whiteCorners.length
-      }
-
-      // 检查中间层状态
-      checkMiddleLayer() {
-        const middleEdges = this.getMiddleEdges()
-        return middleEdges.length
-      }
-
-      // 检查顶层十字状态
-      checkTopCross() {
-        // 检查顶层是否有十字形状
-        const topColors = this.getFaceColors('top')
-        const centerColor = topColors[4] // 中心块颜色
-        let crossCount = 0
-
-        for (let color of topColors) {
-          if (color === centerColor) {
-            crossCount++
-          }
-        }
-
-        return crossCount
-      }
-
-      // 检查顶层角块状态
-      checkTopCorners() {
-        // 检查顶层角块是否还原
-        const topColors = this.getFaceColors('top')
-        const centerColor = topColors[4] // 中心块颜色
-        let cornerCount = 0
-
-        // 检查四个角块
-        const cornerIndices = [0, 2, 6, 8]
-        for (let index of cornerIndices) {
-          if (topColors[index] === centerColor) {
-            cornerCount++
-          }
-        }
-
-        return cornerCount
-      }
-
-      // 生成还原步骤
-      generateSolution() {
-        const solution = []
-
-        // 检查当前状态，如果已经还原则返回空数组
-        if (this.validateSuccees()) {
-          return solution
-        }
-
-        // 获取当前状态
-        const state = this.analyzeCurrentState()
-        console.log('开始还原，当前状态:', state)
-
-        // 根据当前状态选择还原策略
-        if (state.whiteCross > 0) {
-          console.log('需要还原白色十字')
-          const crossSolution = this.solveWhiteCrossSmart()
-          solution.push(...crossSolution)
-        }
-
-        if (state.whiteCorners > 0) {
-          console.log('需要还原白色角块')
-          const cornerSolution = this.solveWhiteCornersSmart()
-          solution.push(...cornerSolution)
-        }
-
-        if (state.middleLayer > 0) {
-          console.log('需要还原中间层')
-          const middleSolution = this.solveMiddleLayerSmart()
-          solution.push(...middleSolution)
-        }
-
-        if (state.topCross < 5) {
-          console.log('需要还原顶层十字')
-          const topCrossSolution = this.solveTopCrossSmart()
-          solution.push(...topCrossSolution)
-        }
-
-        if (state.topCorners < 4) {
-          console.log('需要还原顶层角块')
-          const topCornerSolution = this.solveTopCornersSmart()
-          solution.push(...topCornerSolution)
-        }
-
-        // 如果还是没有还原，使用备用算法
-        if (solution.length === 0 || !this.validateSuccees()) {
-          console.log('使用备用还原算法')
-          const backupSolution = this.getBackupSolution()
-          solution.push(...backupSolution)
-        }
-
-        console.log('生成的还原步骤数量:', solution.length)
-        return solution
-      }
-
-      // 智能还原白色十字
-      solveWhiteCrossSmart() {
-        const solution = []
-
-        // 白色十字还原公式
-        const crossFormulas = [
-          [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1],
-          [1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1],
-          [2, 1, 1], [0, 1, 1], [2, 1, -1], [0, 1, -1]
-        ]
-
-        // 应用多个公式来确保白色十字还原
-        for (let i = 0; i < 3; i++) {
-          solution.push(...crossFormulas)
-        }
-
-        return solution
-      }
-
-      // 智能还原白色角块
-      solveWhiteCornersSmart() {
-        const solution = []
-
-        // 白色角块还原公式
-        const cornerFormulas = [
-          [0, 0, 1], [1, 0, 1], [0, 0, -1], [1, 0, -1],
-          [1, 0, 1], [2, 0, 1], [1, 0, -1], [2, 0, -1],
-          [2, 0, 1], [0, 0, 1], [2, 0, -1], [0, 0, -1]
-        ]
-
-        // 应用多个公式来确保白色角块还原
-        for (let i = 0; i < 4; i++) {
-          solution.push(...cornerFormulas)
-        }
-
-        return solution
-      }
-
-      // 智能还原中间层
-      solveMiddleLayerSmart() {
-        const solution = []
-
-        // 中间层还原公式
-        const middleFormulas = [
-          [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1],
-          [1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1],
-          [2, 1, 1], [0, 1, 1], [2, 1, -1], [0, 1, -1]
-        ]
-
-        // 应用多个公式来确保中间层还原
-        for (let i = 0; i < 3; i++) {
-          solution.push(...middleFormulas)
-        }
-
-        return solution
-      }
-
-      // 智能还原顶层十字
-      solveTopCrossSmart() {
-        const solution = []
-
-        // 顶层十字还原公式
-        const topCrossFormulas = [
-          [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1],
-          [1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1],
-          [2, 1, 1], [0, 1, 1], [2, 1, -1], [0, 1, -1]
-        ]
-
-        // 应用多个公式来确保顶层十字还原
-        for (let i = 0; i < 5; i++) {
-          solution.push(...topCrossFormulas)
-        }
-
-        return solution
-      }
-
-      // 智能还原顶层角块
-      solveTopCornersSmart() {
-        const solution = []
-
-        // 顶层角块还原公式
-        const topCornerFormulas = [
-          [0, 0, 1], [1, 0, 1], [0, 0, -1], [1, 0, -1],
-          [1, 0, 1], [2, 0, 1], [1, 0, -1], [2, 0, -1],
-          [2, 0, 1], [0, 0, 1], [2, 0, -1], [0, 0, -1]
-        ]
-
-        // 应用多个公式来确保顶层角块还原
-        for (let i = 0; i < 6; i++) {
-          solution.push(...topCornerFormulas)
-        }
-
-        return solution
-      }
-
-      // 备用还原算法
-      getBackupSolution() {
-        const solution = []
-
-        // 使用经典的魔方还原公式
-        const classicFormulas = [
-          // 白色十字公式 (R U R' U')
-          [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1],
-
-          // 白色角块公式 (R U R' U' R U2 R')
-          [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1], [0, 1, 1], [0, 1, 1], [0, 1, -1],
-
-          // 中间层公式 (U R U' R' U' F' U F)
-          [1, 1, 1], [0, 1, 1], [1, 1, -1], [0, 1, -1], [1, 1, -1], [2, 1, -1], [1, 1, 1], [2, 1, 1],
-
-          // 顶层十字公式 (F R U R' U' F')
-          [2, 1, 1], [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1], [2, 1, -1],
-
-          // 顶层角块公式 (R U R' U' R U2 R')
-          [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1], [0, 1, 1], [0, 1, 1], [0, 1, -1],
-
-          // 反向公式
-          [0, 1, -1], [1, 1, -1], [0, 1, 1], [1, 1, 1],
-          [1, 1, -1], [0, 1, -1], [1, 1, 1], [0, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, -1],
-          [1, 1, -1], [0, 1, -1], [1, 1, 1], [0, 1, 1], [1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1],
-          [2, 1, -1], [0, 1, -1], [1, 1, -1], [0, 1, 1], [1, 1, 1], [2, 1, 1],
-          [0, 1, -1], [1, 1, -1], [0, 1, 1], [1, 1, 1], [0, 1, -1], [0, 1, -1], [0, 1, 1],
-
-          // 更多组合公式
-          [0, 0, 1], [1, 0, 1], [0, 0, -1], [1, 0, -1],
-          [1, 0, 1], [2, 0, 1], [1, 0, -1], [2, 0, -1],
-          [2, 0, 1], [0, 0, 1], [2, 0, -1], [0, 0, -1],
-
-          // 重复确保还原
-          [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1],
-          [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1], [0, 1, 1], [0, 1, 1], [0, 1, -1],
-          [1, 1, 1], [0, 1, 1], [1, 1, -1], [0, 1, -1], [1, 1, -1], [2, 1, -1], [1, 1, 1], [2, 1, 1],
-          [2, 1, 1], [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1], [2, 1, -1],
-          [0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1], [0, 1, 1], [0, 1, 1], [0, 1, -1]
-        ]
-
-        // 应用所有公式
-        solution.push(...classicFormulas)
-
-        return solution
-      }
-
-      // 获取基本还原公式
-      getBasicFormulas() {
-        const formulas = []
-
-        // 标准魔方还原公式集合
-        const standardFormulas = [
-          // 白色十字公式
-          [[0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1]],
-          [[1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1]],
-          [[2, 1, 1], [0, 1, 1], [2, 1, -1], [0, 1, -1]]
-        ]
-
-        // 随机选择一些公式来尝试还原
-        for (let i = 0; i < 10; i++) {
-          const formula = standardFormulas[Math.floor(Math.random() * standardFormulas.length)]
-          formulas.push(...formula)
-        }
-
-        return formulas
-      }
-
-      // 获取高级还原算法
-      getAdvancedSolution() {
-        const solution = []
-
-        // 如果基本公式不够，添加一些随机移动
-        for (let i = 0; i < 10; i++) {
-          solution.push(this.random())
-        }
-
-        return solution
-      }
-
-      // 简化的搜索算法
-      simpleSearch(depth, path) {
-        // 简化的搜索，直接返回一些随机移动
-        const moves = []
-        for (let i = 0; i < 5; i++) {
-          moves.push(this.random())
-        }
-        return moves
-      }
-
-      // 生成合理的移动序列
-      generateReasonableMoves() {
-        const moves = []
-
-        // 生成一些基本的移动
-        const basicMoves = [
-          [0, 1, 1], [0, 1, -1], [1, 1, 1], [1, 1, -1], [2, 1, 1], [2, 1, -1]
-        ]
-
-        // 随机选择3个移动
-        for (let i = 0; i < 3; i++) {
-          const move = basicMoves[Math.floor(Math.random() * basicMoves.length)]
-          moves.push(move)
-        }
-
-        return moves
-      }
-
-      // 简化还原算法（备用）
-      simpleSolve() {
-        const solution = []
-
-        // 使用一些基本的还原公式
-        const basicFormulas = [
-          // 白色十字公式
-          [[0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1]],
-          [[1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1]],
-          [[2, 1, 1], [0, 1, 1], [2, 1, -1], [0, 1, -1]],
-
-          // 白色角块公式
-          [[0, 0, 1], [1, 0, 1], [0, 0, -1], [1, 0, -1]],
-          [[1, 0, 1], [2, 0, 1], [1, 0, -1], [2, 0, -1]],
-          [[2, 0, 1], [0, 0, 1], [2, 0, -1], [0, 0, -1]],
-
-          // 中间层公式
-          [[0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1]],
-          [[1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1]],
-
-          // 顶层公式
-          [[0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1]],
-          [[1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1]]
-        ]
-
-        // 随机选择一些公式来尝试还原
-        for (let i = 0; i < 15; i++) {
-          const formula = basicFormulas[Math.floor(Math.random() * basicFormulas.length)]
-          solution.push(...formula)
-        }
-
-        return solution
-      }
-
-      // 复杂还原算法
-      complexSolve() {
-        const solution = []
-
-        // 这里实现一个基于状态的还原算法
-        // 1. 先还原白色面
-        const whiteSolution = this.solveWhiteFace()
-        solution.push(...whiteSolution)
-
-        // 2. 还原中间层
-        const middleSolution = this.solveMiddleLayer()
-        solution.push(...middleSolution)
-
-        // 3. 还原顶层
-        const topSolution = this.solveTopLayer()
-        solution.push(...topSolution)
-
-        return solution
-      }
-
-      // 还原白色十字
-      solveWhiteCross() {
-        const solution = []
-
-        // 获取白色面的边缘块位置
-        const whiteEdges = this.getWhiteEdges()
-
-        // 对每个白色边缘块进行还原
-        for (let edge of whiteEdges) {
-          const edgeSolution = this.solveWhiteEdge(edge)
-          solution.push(...edgeSolution)
-        }
-
-        return solution
-      }
-
-      // 获取白色边缘块
-      getWhiteEdges() {
-        const edges = []
-
-        // 检查所有边缘位置
-        const edgePositions = [
-          {x: 1, y: 0, z: 1}, {x: 3, y: 0, z: 1}, {x: 5, y: 0, z: 1},
-          {x: 1, y: 1, z: 0}, {x: 1, y: 1, z: 6}, {x: 1, y: 5, z: 0}, {x: 1, y: 5, z: 6},
-          {x: 3, y: 1, z: 0}, {x: 3, y: 1, z: 6}, {x: 3, y: 5, z: 0}, {x: 3, y: 5, z: 6},
-          {x: 5, y: 1, z: 0}, {x: 5, y: 1, z: 6}, {x: 5, y: 5, z: 0}, {x: 5, y: 5, z: 6}
-        ]
-
-        for (let pos of edgePositions) {
-          if (this.colorMap[pos.x] && this.colorMap[pos.x][pos.y] &&
-              this.colorMap[pos.x][pos.y][pos.z] === 'yellow') {
-            edges.push(pos)
-          }
-        }
-
-        return edges
-      }
-
-      // 还原单个白色边缘块
-      solveWhiteEdge(edge) {
-        const solution = []
-
-        // 根据边缘块的位置选择合适的还原公式
-        const formulas = {
-          // 顶层边缘块
-          'top': [[0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1]],
-          // 中间层边缘块
-          'middle': [[1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1]],
-          // 底层边缘块
-          'bottom': [[2, 1, 1], [0, 1, 1], [2, 1, -1], [0, 1, -1]]
-        }
-
-        // 根据边缘块的Z坐标选择公式
-        let formula
-        if (edge.z === 0) {
-          formula = formulas.top
-        } else if (edge.z === 3) {
-          formula = formulas.middle
-        } else {
-          formula = formulas.bottom
-        }
-
-        // 应用公式
-        solution.push(...formula)
-
-        return solution
-      }
-
-      // 还原白色角块
-      solveWhiteCorners() {
-        const solution = []
-
-        // 获取白色角块位置
-        const whiteCorners = this.getWhiteCorners()
-
-        // 对每个白色角块进行还原
-        for (let corner of whiteCorners) {
-          const cornerSolution = this.solveWhiteCorner(corner)
-          solution.push(...cornerSolution)
-        }
-
-        return solution
-      }
-
-      // 获取白色角块
-      getWhiteCorners() {
-        const corners = []
-
-        // 检查所有角块位置
-        const cornerPositions = [
-          {x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 6}, {x: 0, y: 6, z: 0}, {x: 0, y: 6, z: 6},
-          {x: 6, y: 0, z: 0}, {x: 6, y: 0, z: 6}, {x: 6, y: 6, z: 0}, {x: 6, y: 6, z: 6}
-        ]
-
-        for (let pos of cornerPositions) {
-          if (this.colorMap[pos.x] && this.colorMap[pos.x][pos.y] &&
-              this.colorMap[pos.x][pos.y][pos.z] === 'yellow') {
-            corners.push(pos)
-          }
-        }
-
-        return corners
-      }
-
-      // 还原单个白色角块
-      solveWhiteCorner(corner) {
-        const solution = []
-
-        // 根据角块的位置选择合适的还原公式
-        const formulas = {
-          // 顶层角块
-          'top': [[0, 0, 1], [1, 0, 1], [0, 0, -1], [1, 0, -1]],
-          // 中间层角块
-          'middle': [[1, 0, 1], [2, 0, 1], [1, 0, -1], [2, 0, -1]],
-          // 底层角块
-          'bottom': [[2, 0, 1], [0, 0, 1], [2, 0, -1], [0, 0, -1]]
-        }
-
-        // 根据角块的Z坐标选择公式
-        let formula
-        if (corner.z === 0) {
-          formula = formulas.top
-        } else if (corner.z === 3) {
-          formula = formulas.middle
-        } else {
-          formula = formulas.bottom
-        }
-
-        // 应用公式
-        solution.push(...formula)
-
-        return solution
-      }
-
-      // 还原中间层
-      solveMiddleLayer() {
-        const solution = []
-
-        // 获取中间层边缘块
-        const middleEdges = this.getMiddleEdges()
-
-        // 对每个中间层边缘块进行还原
-        for (let edge of middleEdges) {
-          const edgeSolution = this.solveMiddleEdge(edge)
-          solution.push(...edgeSolution)
-        }
-
-        return solution
-      }
-
-      // 获取中间层边缘块
-      getMiddleEdges() {
-        const edges = []
-
-        // 检查中间层边缘位置
-        const edgePositions = [
-          {x: 1, y: 1, z: 1}, {x: 1, y: 1, z: 5}, {x: 1, y: 5, z: 1}, {x: 1, y: 5, z: 5},
-          {x: 3, y: 1, z: 1}, {x: 3, y: 1, z: 5}, {x: 3, y: 5, z: 1}, {x: 3, y: 5, z: 5},
-          {x: 5, y: 1, z: 1}, {x: 5, y: 1, z: 5}, {x: 5, y: 5, z: 1}, {x: 5, y: 5, z: 5}
-        ]
-
-        for (let pos of edgePositions) {
-          if (this.colorMap[pos.x] && this.colorMap[pos.x][pos.y] &&
-              this.colorMap[pos.x][pos.y][pos.z]) {
-            edges.push(pos)
-          }
-        }
-
-        return edges
-      }
-
-      // 还原单个中间层边缘块
-      solveMiddleEdge(edge) {
-        const solution = []
-
-        // 中间层边缘块还原公式
-        const formulas = [
-          // 标准中间层公式
-          [[0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1]],
-          [[1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1]],
-          [[2, 1, 1], [0, 1, 1], [2, 1, -1], [0, 1, -1]]
-        ]
-
-        // 根据边缘块的位置选择合适的公式
-        const formulaIndex = Math.floor(Math.random() * formulas.length)
-        const formula = formulas[formulaIndex]
-
-        // 应用公式
-        solution.push(...formula)
-
-        return solution
-      }
-
-      // 还原顶层十字
-      solveTopCross() {
-        const solution = []
-
-        // 顶层十字还原公式
-        const formulas = [
-          // 顶层十字公式
-          [[0, 1, 1], [1, 1, 1], [0, 1, -1], [1, 1, -1]],
-          [[1, 1, 1], [2, 1, 1], [1, 1, -1], [2, 1, -1]],
-          [[2, 1, 1], [0, 1, 1], [2, 1, -1], [0, 1, -1]]
-        ]
-
-        // 应用多个公式来确保顶层十字还原
-        for (let i = 0; i < 3; i++) {
-          const formula = formulas[i]
-          solution.push(...formula)
-        }
-
-        return solution
-      }
-
-      // 还原顶层角块
-      solveTopCorners() {
-        const solution = []
-
-        // 顶层角块还原公式
-        const formulas = [
-          // 顶层角块公式
-          [[0, 0, 1], [1, 0, 1], [0, 0, -1], [1, 0, -1]],
-          [[1, 0, 1], [2, 0, 1], [1, 0, -1], [2, 0, -1]],
-          [[2, 0, 1], [0, 0, 1], [2, 0, -1], [0, 0, -1]]
-        ]
-
-        // 应用多个公式来确保顶层角块还原
-        for (let i = 0; i < 4; i++) {
-          const formula = formulas[i % formulas.length]
-          solution.push(...formula)
-        }
-
-        return solution
-      }
-
-      // 还原白色面
-      solveWhiteFace() {
-        const solution = []
-
-        // 简化的白色面还原
-        // 这里只是示例，实际需要更复杂的算法
-        for (let i = 0; i < 10; i++) {
-          const move = this.random()
-          solution.push(move)
-        }
-
-        return solution
-      }
-
-      // 还原顶层
-      solveTopLayer() {
-        const solution = []
-
-        // 简化的顶层还原
-        for (let i = 0; i < 12; i++) {
-          const move = this.random()
-          solution.push(move)
-        }
-
-        return solution
       }
     }
 
     const base = new Base(document.getElementById('base'))
     base.init()
-    window.test = base.test.bind(base)
-
+    window.test = base.test.bind(base);
+    Cube.initSolver();
     // 每一个方块面叫grid
 
     // 每一个方块体叫block
@@ -3239,9 +2603,6 @@
 
     // 事件加在grid 上面, 根据拖拽方向,  看由哪个魔方旋转实现动画
   </script>
-
-
-
 
 </body>
 
